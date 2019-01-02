@@ -1,3 +1,8 @@
+import json
+
+import boto3
+from botocore.exceptions import ClientError
+
 from app.read_users_from_file import *
 from config import config
 from utils.loggingtemplate import logger
@@ -98,11 +103,11 @@ try:
         logger.debug("Success - Deleted Application specific role \n" + str(response))
 
 
-    def create_iam_user(org_path, user_name_list):
+    def create_iam_user(org_path, send_user_name_list):
 
         logger.debug("Number of users in file - " + str(len(user_name_list)))
 
-        #Delete the below function after debug
+        # Delete the below function after debug
         for user_name in user_name_list:
             logger.debug("User name --- " + str(user_name))
 
@@ -139,6 +144,7 @@ try:
             )
             logger.debug("Success - Added user to the group " + str(response))
 
+
     def remove_user_from_group(iam_group_name, user_name_list):
 
         for user_name in user_name_list:
@@ -147,6 +153,7 @@ try:
                 UserName=user_name
             )
             logger.debug("Success - Removed users from the group " + str(response))
+
 
     def create_account_accesskey(user_name_list, first_name_list, last_name_list, email_address_list):
 
@@ -183,8 +190,6 @@ try:
         logger.debug("Success - Deleted account accesskey\n" + str(response))
 
 
-
-
     def create_login_profile(user_name_list):
 
         for user_name in user_name_list:
@@ -207,20 +212,12 @@ try:
             logger.debug("Success - Deleted account login profile\n" + str(response))
 
 
+except client.exceptions.EntityAlreadyExistsException:
+    print("User already exists")
+
 except ClientError as e:
     logger.error(e.response['Error']['Message'])
 
 except Exception as err:
     logger.error(err)
 
-logger.debug('Testing the class iam-functions')
-
-# read_enrolled_users(config.enrolled_users_file)
-# create_iam_group_policy(config.iam_policy_name, config.org_path, config.policy_filename)
-# create_iam_group(config.org_path, config.iam_group_name)
-# attach_group_policy(config.policy_arn, config.org_path, config.iam_policy_name, config.iam_group_name)
-# app_specific_role(config.iam_role_name, config.org_path, config.role_policy_filename)
-# create_iam_user(config.org_path, user_name_list)
-# add_user_to_group(config.iam_group_name, user_name_list)
-# create_account_accesskey(user_name_list, first_name_list, last_name_list, email_address_list)
-# create_login_profile(user_name_list)

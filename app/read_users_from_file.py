@@ -1,8 +1,3 @@
-import json
-
-import boto3
-from botocore.exceptions import ClientError
-
 from utils.loggingtemplate import logger
 
 first_name_list = []
