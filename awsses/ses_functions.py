@@ -1,6 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
-from app.user_enrollment import *
+from app.read_users_from_file import *
 from utils.loggingtemplate import logger
 from config import config
 
@@ -22,6 +22,18 @@ try:
                 logger.debug('Success - Verification email sent to ' + email_address + '. Request ID: ' +
                              response['ResponseMetadata']['RequestId'])
 
+    def delete_verified_email_address(filename):
+        with open(filename, 'r') as readfile:
+            next(readfile)
+            for line in readfile:
+                first_name, last_name, email_address = line.split('|')
+                logger.debug("Email Address to be verification to be deleted - " + email_address)
+
+                response = client.delete_verified_email_address(
+                    EmailAddress=email_address.lower()
+                )
+                logger.debug('Success - Deleted the verification email address  ' + email_address + '. Request ID: ' +
+                             response['ResponseMetadata']['RequestId'])
 
     def create_configuration(configset_name):
         response = client.create_configuration_set(
@@ -30,6 +42,13 @@ try:
             }
         )
         logger.debug("configuration created successfully " + str(response))
+
+
+    def delete_configuration(configset_name):
+        response = client.delete_configuration_set(
+            ConfigurationSetName=configset_name
+        )
+        logger.debug("configuration deleted successfully " + str(response))
 
 
     def create_template(template_name, subject_content, html_content):
@@ -42,6 +61,11 @@ try:
         )
         logger.debug("template created successfully " + str(response))
 
+    def delete_template(template_name):
+        response = client.delete_template(
+            TemplateName=template_name
+        )
+        logger.debug("template deleted successfully " + str(response))
 
     def send_templated_email(source_email, template_name, configset_name, email_address_list, template_content):
 
@@ -51,7 +75,7 @@ try:
             for line in readfile:
                 awsacccesskey, awssecretkey, firstname, lastname, username, password, emailaddress = line.split('|#|')
                 logger.debug("awsacccesskey, awssecretkey, firstname, lastname, username, password, emailaddress")
-                logger.debug(awsacccesskey, awssecretkey, firstname, lastname, username, password, emailaddress)
+                logger.debug(str(awsacccesskey), str(awssecretkey), str(firstname), str(lastname), str(username), str(password), str(emailaddress))
                 updated_template_content.append(
                     template_content.replace('##', lastname).replace('$$', 'http').replace('**', username).replace('%%',
                         password).replace('@@', awsacccesskey).replace('==', awssecretkey).replace('http', config.aws_console_link))

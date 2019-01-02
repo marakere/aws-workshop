@@ -1,8 +1,4 @@
-import json
-
-import boto3
-from botocore.exceptions import ClientError
-from app.user_enrollment import *
+from app.read_users_from_file import *
 from config import config
 from utils.loggingtemplate import logger
 
@@ -11,6 +7,7 @@ try:
     client = boto3.client('iam')
 
     read_enrolled_users(config.enrolled_users_file)
+
 
     def create_iam_group_policy(iam_policy_name, org_path, policy_filename):
 
@@ -26,6 +23,15 @@ try:
         logger.debug("Success - iam group policy created\n" + str(response))
 
 
+    def delete_iam_group_policy(policy_arn, org_path, iam_policy_name):
+
+        new_policy_arn = policy_arn + org_path + iam_policy_name
+        response = client.delete_policy(
+            PolicyArn=new_policy_arn
+        )
+        logger.debug("Success - Detached the policy from the group\n " + str(response))
+
+
     def create_iam_group(org_path, iam_group_name):
 
         response = client.create_group(
@@ -33,6 +39,14 @@ try:
             GroupName=iam_group_name
         )
         logger.debug("Success - iam group created\n" + str(response))
+
+
+    def delete_iam_group(iam_group_name):
+
+        response = client.delete_group(
+            GroupName=iam_group_name
+        )
+        logger.debug("Success - iam group deleted\n" + str(response))
 
 
     def attach_group_policy(policy_arn, org_path, iam_policy_name, iam_group_name):
@@ -45,7 +59,17 @@ try:
         logger.debug("Success - Attaching the policy to the group\n " + str(response))
 
 
-    def app_specific_role(iam_role_name, org_path, role_policy_filename):
+    def detach_group_policy(policy_arn, org_path, iam_policy_name, iam_group_name):
+
+        new_policy_arn = policy_arn + org_path + iam_policy_name
+        response = client.detach_group_policy(
+            GroupName=iam_group_name,
+            PolicyArn=new_policy_arn
+        )
+        logger.debug("Success - Detached the policy to the group\n " + str(response))
+
+
+    def create_app_specific_role(iam_role_name, org_path, role_policy_filename):
 
         with open(role_policy_filename) as json_data:
             application_iam_role = json.load(json_data)
@@ -67,9 +91,21 @@ try:
         logger.debug("Success - Created Application specific role \n" + str(response))
 
 
+    def delete_app_specific_role(iam_role_name):
+        response = client.delete_role(
+            RoleName=iam_role_name
+        )
+        logger.debug("Success - Deleted Application specific role \n" + str(response))
+
+
     def create_iam_user(org_path, user_name_list):
 
         logger.debug("Number of users in file - " + str(len(user_name_list)))
+
+        #Delete the below function after debug
+        for user_name in user_name_list:
+            logger.debug("User name --- " + str(user_name))
+
         for user_name in user_name_list:
             response = client.create_user(
                 Path=org_path,
@@ -84,6 +120,16 @@ try:
             logger.debug("Success - Created IAM users\n" + str(response))
 
 
+    def delete_iam_user(user_name_list):
+
+        logger.debug("Number of users in file - " + str(len(user_name_list)))
+        for user_name in user_name_list:
+            response = client.delete_user(
+                UserName=user_name
+            )
+            logger.debug("Success - Deleted IAM users\n" + str(response))
+
+
     def add_user_to_group(iam_group_name, user_name_list):
 
         for user_name in user_name_list:
@@ -93,6 +139,14 @@ try:
             )
             logger.debug("Success - Added user to the group " + str(response))
 
+    def remove_user_from_group(iam_group_name, user_name_list):
+
+        for user_name in user_name_list:
+            response = client.remove_user_from_group(
+                GroupName=iam_group_name,
+                UserName=user_name
+            )
+            logger.debug("Success - Removed users from the group " + str(response))
 
     def create_account_accesskey(user_name_list, first_name_list, last_name_list, email_address_list):
 
@@ -113,8 +167,25 @@ try:
             f.write(write_to_file)
 
 
-    def create_login_profile(user_name_list):
+    def delete_account_accesskey(user_name_list):
 
+        for i in range(len(user_name_list)):
+            paginator = client.get_paginator('list_access_keys')
+            for response in paginator.paginate(UserName=user_name_list[i]):
+                AccessKeyMetadata = response['AccessKeyMetadata']
+                print(AccessKeyMetadata)
+                for AccessKeyId in AccessKeyMetadata:
+                    key = AccessKeyId['AccessKeyId']
+            response = client.delete_access_key(
+                UserName=user_name_list[i],
+                AccessKeyId=key
+            )
+        logger.debug("Success - Deleted account accesskey\n" + str(response))
+
+
+
+
+    def create_login_profile(user_name_list):
 
         for user_name in user_name_list:
             password = user_name + 'pwd'
@@ -125,6 +196,15 @@ try:
             )
             logger.debug("Success - user login profile created " +
                          str(response))
+
+
+    def delete_login_profile(user_name_list):
+        logger.debug("Number of users in file - " + str(len(user_name_list)))
+        for user_name in user_name_list:
+            response = client.delete_login_profile(
+                UserName=user_name
+            )
+            logger.debug("Success - Deleted account login profile\n" + str(response))
 
 
 except ClientError as e:
