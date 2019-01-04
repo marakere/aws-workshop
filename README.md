@@ -24,30 +24,47 @@ The utility performs below functionalities under IAM and SES
 
 ### Installation steps
 ```
+# Clone the code base
 git clone https://github.com/marakere/aws-workshop.git
 cd aws-workshop
-#Create the virual environment
+```
+
+```
+# Create the virual environment
 python -m virtualenv venv
-#Activate and install the project dependencies
+```
+
+```
+# Activate and install the project dependencies
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-#Renaming the files to actual file names 
+```
+# Renaming the files to actual file names 
 mv input/sample_enrolled_users_identities.txt input/enrolled_users_identities.txt
 mv config/sampleconfig.py config/config.py
+```
 
-#Replace the dummy AWS account with actual one
+```
+# Replace the dummy AWS account with actual one
 vi config/config.py
 —change the policyarn account to a valid AWS account ID
+```
 
-
+```
+# Good to go
 python -m app.create_aws_resources.py
-After successful execution, login to was console and verify the email address. Once the email address verification is complete, it’s time to send email with credentials.
+# After successful execution, login to was console and verify the email address. Once the email address verification is complete, it’s time to send email with credentials.
+
 vi app/create_aws_resources.py
-— Comment all the functions and uncomment send_templated_email() to send out email and run the file again
+# Comment all the functions and uncomment send_templated_email() to send out email and run the file again
+
 python -m app.create_aws_resources.py
 # By now you should have an email in inbox with login details. 
+```
 
+```
 # Delete the resources created by running the below command
 python -m app.delete_aws_resources.py
 ```
