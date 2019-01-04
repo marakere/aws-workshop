@@ -1,7 +1,7 @@
 import logging
 import os
 
-log_dir = os.path.join(os.path.normpath(os.getcwd() + os.sep + os.pardir), 'logs')
+log_dir = os.path.join(os.path.normpath(os.getcwd() + os.sep + os.pardir), 'aws-workshop/logs')
 log_fname = os.path.join(log_dir, 'aws-workshop.log')
 
 logger = logging.getLogger('aws-workshop')
